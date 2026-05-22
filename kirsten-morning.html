@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Morning Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#e0f4ff;--sun:#FFD93D;--orange:#FF6B35;
+    --teal:#00C9A7;--purple:#845EC2;--pink:#FF6B8A;
+    --blue:#4D96FF;--green:#06D6A0;--card-bg:#fff;--text:#2d2d2d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--sky);font-family:'Nunito',sans-serif;
+    min-height:100vh;padding:20px;
+    background-image:
+      radial-gradient(circle at 10% 15%,#fff6c3 0%,transparent 30%),
+      radial-gradient(circle at 90% 80%,#d4f5ff 0%,transparent 35%);
+  }
+  header{text-align:center;padding:20px 16px 8px;}
+  .sun-icon{
+    font-size:48px;display:block;
+    animation:spin-bob 4s ease-in-out infinite;
+    filter:drop-shadow(0 4px 8px #FFD93D88);
+  }
+  @keyframes spin-bob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-8px) rotate(5deg)}}
+  h1{font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,6vw,2.8rem);color:var(--orange);line-height:1.1;text-shadow:3px 3px 0 #FFD93D;margin-top:4px;}
+  .subtitle{font-size:.9rem;color:#888;font-weight:700;margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+
+  /* ── Current Task banner ── */
+  .current-banner{
+    max-width:520px;margin:12px auto 0;
+    background:white;border-radius:18px;
+    padding:14px 18px;
+    box-shadow:0 4px 0 #d0eaf5,0 6px 16px rgba(0,0,0,.07);
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    align-items:center;gap:12px;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .4s,transform .4s;
+    border-left:6px solid var(--blue);
+  }
+  .current-banner.visible{opacity:1;transform:translateY(0);}
+  .current-banner.late-banner{border-color:#e05555;}
+  .current-banner.ahead-banner{border-color:var(--green);}
+  .cb-left{min-width:0;}
+  .cb-label{font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#aaa;margin-bottom:2px;}
+  .cb-name{font-size:1.1rem;font-weight:900;color:var(--text);line-height:1.2;}
+  .cb-right{text-align:center;flex-shrink:0;}
+  .cb-time{font-family:'Fredoka One',cursive;font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--blue);}
+  .current-banner.late-banner .cb-time{color:#e05555;}
+  .current-banner.ahead-banner .cb-time{color:var(--green);}
+  .cb-sublabel{font-size:.62rem;font-weight:800;color:#aaccdd;text-transform:uppercase;letter-spacing:.5px;}
+  .current-banner.late-banner .cb-sublabel{color:#e09090;}
+  .current-banner.ahead-banner .cb-sublabel{color:var(--teal);}
+
+  /* Checkbox in banner */
+  .cb-check{
+    width:34px;height:34px;border-radius:50%;border:3px solid #ddd;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:transparent;cursor:pointer;
+    transition:all .2s;flex-shrink:0;
+  }
+  .cb-check:hover{border-color:var(--green);background:#edfbf5;}
+  .cb-check.checked{background:var(--green);border-color:var(--green);color:white;}
+  .cb-check.hidden{visibility:hidden;pointer-events:none;}
+
+  /* Break timer button — below banner */
+  .break-wrap{
+    max-width:520px;margin:8px auto 0;
+    display:flex;justify-content:center;
+    opacity:0;transform:translateY(8px);
+    transition:opacity .4s,transform .4s;
+  }
+  .break-wrap.visible{opacity:1;transform:translateY(0);}
+  .break-btn{
+    background:white;border:2px solid #d8f0fb;border-radius:20px;
+    padding:7px 20px;font-family:'Nunito',sans-serif;font-size:.8rem;
+    font-weight:800;color:#90c8e0;cursor:pointer;
+    display:flex;align-items:center;gap:8px;
+    transition:background .2s,color .2s,border-color .2s;
+    box-shadow:0 2px 0 #d0eaf5;
+  }
+  .break-btn:hover{background:#e8f7ff;color:var(--blue);border-color:var(--blue);}
+  .break-btn.running{background:#fff8e6;border-color:var(--sun);color:#cc9900;animation:pulse-glow 1s ease-in-out infinite;}
+  .break-btn.done-t{background:#e8fdf5;border-color:var(--green);color:var(--teal);}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 2px 0 #ffe49a}50%{box-shadow:0 2px 10px #FFD93Daa}}
+  .break-display{font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+
+  /* Live clock */
+  .live-clock{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#aac8e8;text-align:center;margin:6px 0 0;letter-spacing:1px;}
+
+  /* Progress */
+  .progress-wrap{max-width:520px;margin:12px auto 4px;padding:0 4px;}
+  .progress-label{display:flex;justify-content:space-between;font-size:.82rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+  #progress-count{color:var(--teal);}
+  .progress-bar{height:10px;background:#dff0fa;border-radius:10px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;}
+
+  .schedule{max-width:520px;margin:16px auto 0;display:flex;flex-direction:column;gap:8px;}
+
+  /* ── Task card ── */
+  .task-card{
+    background:var(--card-bg);border-radius:20px;
+    padding:14px 16px 14px 20px;
+    display:grid;grid-template-columns:52px 1fr auto auto;
+    align-items:center;gap:12px;
+    box-shadow:0 4px 0 #d0eaf5,0 6px 16px rgba(0,0,0,.06);
+    opacity:0;transform:translateY(20px);
+    transition:opacity .4s ease,transform .4s ease,box-shadow .2s;
+    position:relative;overflow:hidden;
+  }
+  .task-card.visible{opacity:1;transform:translateY(0);}
+  .task-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:20px 0 0 20px;}
+
+  .task-card.active{box-shadow:0 0 0 3px var(--blue),0 6px 20px rgba(77,150,255,.25);}
+  .task-card.active::after{content:'NOW';position:absolute;top:8px;right:56px;font-size:.6rem;font-weight:900;letter-spacing:1px;color:white;background:var(--blue);border-radius:6px;padding:2px 6px;}
+  .task-card.late{box-shadow:0 0 0 3px #ff6b6b,0 6px 20px rgba(255,100,100,.2);}
+  .task-card.late::after{background:#e05555;content:'LATE';}
+
+  .task-card.done{background:#f5fdf8;box-shadow:0 4px 0 #b8ebd5,0 6px 16px rgba(0,0,0,.04);}
+  .task-card.done .task-name{text-decoration:line-through;color:#aaa;}
+  .task-card.done .task-time{color:#bbb;}
+  .task-card.done .task-duration{color:#ddd;}
+
+  /* no-check card — 3 cols */
+  .task-card.no-check{grid-template-columns:52px 1fr auto;}
+
+  .emoji-box{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+  .task-info{min-width:0;}
+  .task-time{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#aaa;margin-bottom:2px;}
+  .task-name{font-size:1.05rem;font-weight:800;color:var(--text);line-height:1.2;}
+  .task-duration{font-size:.75rem;font-weight:700;color:#6f7782;margin-top:2px;}
+
+  /* ── Countdown chip ── */
+  .task-countdown{
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    background:#f0f8ff;border:2px solid #d4ecfb;border-radius:14px;
+    padding:6px 10px;min-width:60px;line-height:1.2;
+  }
+  .cd-time{font-family:'Fredoka One',cursive;font-size:1rem;font-variant-numeric:tabular-nums;letter-spacing:.5px;color:var(--blue);}
+  .cd-label{font-size:.62rem;font-weight:800;color:#aaccdd;text-transform:uppercase;letter-spacing:.5px;}
+
+  .task-card.active .task-countdown{background:#edf4ff;border-color:var(--blue);}
+  .task-card.active .cd-time{color:var(--blue);}
+  .task-card.active .cd-label{color:#80aae0;}
+  .task-card.late .task-countdown{background:#fff0f0;border-color:#ffaaaa;}
+  .task-card.late .cd-time{color:#e05555;}
+  .task-card.late .cd-label{color:#e09090;}
+  .task-card.done .task-countdown{background:#f0fbf6;border-color:#b8ebd5;}
+  .task-card.done .cd-time{font-size:.82rem;}
+  .task-countdown.delta-early{background:#edfbf5;border-color:var(--green);}
+  .task-countdown.delta-early .cd-time{color:var(--green);}
+  .task-countdown.delta-late{background:#fff0f0;border-color:#ffaaaa;}
+  .task-countdown.delta-late .cd-time{color:#e05555;}
+  .task-card.future .task-countdown{opacity:.45;}
+
+  /* ── Check circle ── */
+  .check-circle{
+    width:28px;height:28px;border-radius:50%;border:3px solid #ddd;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:all .2s;font-size:14px;color:transparent;cursor:pointer;
+  }
+  .task-card.done .check-circle{background:var(--green);border-color:var(--green);color:white;}
+
+  /* ── Colour themes ── */
+  .c1::before{background:var(--sun)}    .c1 .emoji-box{background:#fffbe6}.c1 .task-time{color:#e8b400}
+  .c2::before{background:var(--orange)} .c2 .emoji-box{background:#fff0ea}.c2 .task-time{color:var(--orange)}
+  .c3::before{background:var(--pink)}   .c3 .emoji-box{background:#fff0f3}.c3 .task-time{color:var(--pink)}
+  .c4::before{background:var(--purple)} .c4 .emoji-box{background:#f3eeff}.c4 .task-time{color:var(--purple)}
+  .c5::before{background:var(--blue)}   .c5 .emoji-box{background:#edf4ff}.c5 .task-time{color:var(--blue)}
+  .c6::before{background:var(--teal)}   .c6 .emoji-box{background:#e6faf6}.c6 .task-time{color:var(--teal)}
+  .c7::before{background:var(--green)}  .c7 .emoji-box{background:#e8fdf5}.c7 .task-time{color:var(--green)}
+  .c8::before{background:#FF9F40}       .c8 .emoji-box{background:#fff4e6}.c8 .task-time{color:#FF9F40}
+
+  .leave-window{
+    background:linear-gradient(135deg,#fff8e6,#fffbe6);
+    border:2px dashed #FFD93D;border-radius:16px;
+    text-align:center;padding:12px 16px;
+    max-width:520px;margin:6px auto 0;
+    font-size:.85rem;font-weight:800;color:#cc9900;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .4s ease,transform .4s ease;
+  }
+  .leave-window.visible{opacity:1;transform:translateY(0);}
+
+  .bottom-msg{
+    text-align:center;margin:20px auto 32px;max-width:420px;
+    font-size:.88rem;font-weight:700;color:#aaa;padding:0 16px;line-height:1.5;
+    opacity:0;transition:opacity .4s ease;
+  }
+  .bottom-msg.visible{opacity:1;}
+  .done-msg{display:none;color:var(--teal);font-size:1.05rem;font-family:'Fredoka One',cursive;}
+  @keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="sun-icon">☀️</span>
+  <h1>My Morning Schedule</h1>
+  <p class="subtitle">P7 · Weekday Morning</p>
+</header>
+
+<!-- Current Task banner -->
+<div class="current-banner" id="current-banner">
+  <div class="cb-left">
+    <div class="cb-label">Current Task</div>
+    <div class="cb-name" id="cb-name">—</div>
+  </div>
+  <div class="cb-right">
+    <div class="cb-time" id="cb-time">—</div>
+    <div class="cb-sublabel" id="cb-sublabel">to end</div>
+  </div>
+  <div class="cb-check" id="cb-check" onclick="tickCurrentTask()">✓</div>
+</div>
+
+<!-- Single 2-minute break timer -->
+<div class="break-wrap" id="break-wrap">
+  <button class="break-btn" id="break-btn" onclick="startBreakTimer()">
+    <span>🌬️</span><span class="break-display" id="break-display">Start 2 min break</span>
+  </button>
+</div>
+
+<div class="live-clock" id="live-clock">Current Time: --:--:--</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Progress</span>
+    <span><span id="progress-count">0</span> / 6 done</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="schedule" id="schedule">
+
+  <!-- Get Out of Bed — no checkbox -->
+  <div class="task-card c1 no-check" data-start="7:15" data-end="7:15" data-ncheck="1">
+    <div class="emoji-box">⏰</div>
+    <div class="task-info">
+      <div class="task-time">7:15 AM</div>
+      <div class="task-name">Get Out of Bed</div>
+      <div class="task-duration">Rise &amp; shine!</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">time</span></div>
+  </div>
+
+  <!-- Get Dressed -->
+  <div class="task-card c6" data-start="7:15" data-end="7:28">
+    <div class="emoji-box">👗</div>
+    <div class="task-info">
+      <div class="task-time">7:15 AM</div>
+      <div class="task-name">Get Dressed</div>
+      <div class="task-duration">13 minutes</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to end</span></div>
+    <div class="check-circle" onclick="toggleTask(this.closest('.task-card'))">✓</div>
+  </div>
+
+  <!-- Breakfast -->
+  <div class="task-card c4" data-start="7:28" data-end="7:49">
+    <div class="emoji-box">🥣</div>
+    <div class="task-info">
+      <div class="task-time">7:28 AM</div>
+      <div class="task-name">Eat Breakfast</div>
+      <div class="task-duration">21 minutes</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to end</span></div>
+    <div class="check-circle" onclick="toggleTask(this.closest('.task-card'))">✓</div>
+  </div>
+
+  <!-- Brush Hair -->
+  <div class="task-card c7" data-start="7:49" data-end="7:54">
+    <div class="emoji-box">💇</div>
+    <div class="task-info">
+      <div class="task-time">7:49 AM</div>
+      <div class="task-name">Brush Hair</div>
+      <div class="task-duration">5 minutes</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to end</span></div>
+    <div class="check-circle" onclick="toggleTask(this.closest('.task-card'))">✓</div>
+  </div>
+
+  <!-- Pack Lunch -->
+  <div class="task-card c8" data-start="7:54" data-end="8:02">
+    <div class="emoji-box">🥪</div>
+    <div class="task-info">
+      <div class="task-time">7:54 AM</div>
+      <div class="task-name">Pack Lunch</div>
+      <div class="task-duration">8 minutes</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to end</span></div>
+    <div class="check-circle" onclick="toggleTask(this.closest('.task-card'))">✓</div>
+  </div>
+
+  <!-- Pack Bag -->
+  <div class="task-card c7" data-start="8:02" data-end="8:12">
+    <div class="emoji-box">🎒</div>
+    <div class="task-info">
+      <div class="task-time">8:02 AM</div>
+      <div class="task-name">Pack Bag</div>
+      <div class="task-duration">10 minutes · books, PE kit, homework</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to end</span></div>
+    <div class="check-circle" onclick="toggleTask(this.closest('.task-card'))">✓</div>
+  </div>
+
+  <!-- Brush Teeth -->
+  <div class="task-card c5" data-start="8:12" data-end="8:17">
+    <div class="emoji-box">🦷</div>
+    <div class="task-info">
+      <div class="task-time">8:12 AM</div>
+      <div class="task-name">Brush Teeth</div>
+      <div class="task-duration">5 minutes</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to end</span></div>
+    <div class="check-circle" onclick="toggleTask(this.closest('.task-card'))">✓</div>
+  </div>
+
+  <!-- Leave — no checkbox, always live countdown -->
+  <div class="task-card c8 no-check" data-start="8:30" data-end="8:35" data-ncheck="1">
+    <div class="emoji-box">🚪</div>
+    <div class="task-info">
+      <div class="task-time">8:30 – 8:35 AM</div>
+      <div class="task-name">Leave the House!</div>
+      <div class="task-duration">Have a great day 🌟</div>
+    </div>
+    <div class="task-countdown"><span class="cd-time">—</span><span class="cd-label">to leave</span></div>
+  </div>
+
+</div>
+
+<div class="leave-window" id="leave-window">
+  🟡 Leave anytime between <strong>8:30</strong> and <strong>8:35</strong> — no rush, just aim for the window!
+</div>
+
+<div class="bottom-msg" id="bottom-msg">
+  <span class="default-msg">Tap ✓ in the banner or on a card to tick off · break timer at top anytime ⏱️</span>
+  <span class="done-msg">🎉 You're all done — have an amazing day!</span>
+</div>
+
+<script>
+// ── Reveal ────────────────────────────────────────────────────────────────
+function revealAll(){
+  const els=document.querySelectorAll('.task-card,.break-wrap,#leave-window,#bottom-msg,#current-banner');
+  els.forEach((el,i)=>setTimeout(()=>el.classList.add('visible'),i*55));
+}
+window.addEventListener('load',()=>{revealAll();loadState();});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')
+    document.querySelectorAll('.task-card,.break-wrap,#leave-window,#bottom-msg,#current-banner')
+      .forEach(el=>el.classList.add('visible'));
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function toMins(s){const[h,m]=s.split(':').map(Number);return h*60+m;}
+function fmt(secs){const s=Math.abs(Math.round(secs));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+// ── Task data ─────────────────────────────────────────────────────────────
+const cards=Array.from(document.querySelectorAll('.task-card'));
+const tasks=cards.map(c=>({
+  el:c,
+  start:toMins(c.dataset.start),
+  end:toMins(c.dataset.end),
+  name:c.querySelector('.task-name').textContent,
+  noCheck:!!c.dataset.ncheck,
+  cdTime:c.querySelector('.cd-time'),
+  cdLabel:c.querySelector('.cd-label'),
+  cdChip:c.querySelector('.task-countdown'),
+  checkedAt:null,
+  doneDeltaSet:false,
+}));
+
+const totalCheckable=tasks.slice(1,-1).length; // 6, exclude first and last
+
+// ── Persistence ───────────────────────────────────────────────────────────
+const STORE_KEY='p7schedule_v1';
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify({
+      date:todayStr(),
+      tasks:tasks.map(t=>({done:t.el.classList.contains('done'),checkedAt:t.checkedAt}))
+    }));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(!raw)return;
+    const state=JSON.parse(raw);
+    if(state.date!==todayStr()){localStorage.removeItem(STORE_KEY);return;} // new day — reset
+    state.tasks.forEach((s,i)=>{
+      if(!s.done||!tasks[i]||tasks[i].noCheck)return;
+      tasks[i].el.classList.add('done');
+      tasks[i].checkedAt=s.checkedAt;
+      tasks[i].doneDeltaSet=false; // tick() will render delta chip
+    });
+    updateProgress();
+  }catch(e){}
+}
+
+// ── Audio ─────────────────────────────────────────────────────────────────
+let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function ping(){
+  try{
+    const ctx=getAudio();
+    [880,1100].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.type='sine';osc.frequency.value=freq;
+      const t=ctx.currentTime+i*0.18;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.35,t+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      osc.start(t);osc.stop(t+0.65);
+    });
+  }catch(e){}
+  if(navigator.vibrate)navigator.vibrate([180,80,180]);
+}
+document.addEventListener('click',()=>{try{getAudio();}catch(e){}},{once:true});
+
+// ── Progress ──────────────────────────────────────────────────────────────
+function updateProgress(){
+  const done=tasks.slice(1,-1).filter(t=>t.el.classList.contains('done')).length;
+  document.getElementById('progress-count').textContent=done;
+  document.getElementById('progress-fill').style.width=(done/totalCheckable*100)+'%';
+  document.querySelector('.default-msg').style.display=done===totalCheckable?'none':'block';
+  const dm=document.querySelector('.done-msg');
+  dm.style.display=done===totalCheckable?'block':'none';
+  if(done===totalCheckable){dm.style.animation='none';dm.offsetHeight;dm.style.animation='pop .4s ease';}
+}
+
+// ── Toggle task (card checkbox) ───────────────────────────────────────────
+function toggleTask(card){
+  const t=tasks.find(t=>t.el===card);
+  if(!t||t.noCheck)return;
+  const wasDone=card.classList.contains('done');
+  card.classList.toggle('done');
+  if(!wasDone){
+    const now=new Date();
+    t.checkedAt=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+    t.doneDeltaSet=false;
+  } else {
+    t.checkedAt=null;t.doneDeltaSet=false;
+    t.cdChip.classList.remove('delta-early','delta-late');
+  }
+  updateProgress();
+  saveState();
+}
+
+// ── Tick current task from banner checkbox ────────────────────────────────
+let currentActiveIdx=-1;
+function tickCurrentTask(){
+  if(currentActiveIdx===-1)return;
+  const t=tasks[currentActiveIdx];
+  if(!t||t.noCheck)return;
+  toggleTask(t.el);
+  // Update banner check appearance
+  syncBannerCheck();
+}
+function syncBannerCheck(){
+  const cbCheck=document.getElementById('cb-check');
+  if(currentActiveIdx===-1){cbCheck.classList.add('hidden');return;}
+  const t=tasks[currentActiveIdx];
+  if(t.noCheck){cbCheck.classList.add('hidden');return;}
+  cbCheck.classList.remove('hidden');
+  if(t.el.classList.contains('done'))cbCheck.classList.add('checked');
+  else cbCheck.classList.remove('checked');
+}
+
+// ── Break timer ───────────────────────────────────────────────────────────
+let breakInterval=null;
+let breakRunning=false;
+function startBreakTimer(){
+  const btn=document.getElementById('break-btn');
+  const disp=document.getElementById('break-display');
+  if(breakRunning){
+    // Cancel
+    clearInterval(breakInterval);breakInterval=null;breakRunning=false;
+    btn.classList.remove('running','done-t');
+    disp.textContent='Start 2 min break';
+    return;
+  }
+  breakRunning=true;
+  btn.classList.remove('done-t');btn.classList.add('running');
+  let remaining=120;
+  disp.textContent=fmt(remaining);
+  breakInterval=setInterval(()=>{
+    remaining--;
+    disp.textContent=fmt(remaining);
+    if(remaining<=0){
+      clearInterval(breakInterval);breakInterval=null;breakRunning=false;
+      btn.classList.remove('running');btn.classList.add('done-t');
+      disp.textContent='✅ Break done!';
+      ping();
+      // Reset after 4s
+      setTimeout(()=>{btn.classList.remove('done-t');disp.textContent='Start 2 min break';},4000);
+    }
+  },1000);
+}
+
+// ── Main tick ─────────────────────────────────────────────────────────────
+let lastNotifiedIdx=-1;
+
+function tick(){
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  const nowSecs=nowMins*60+now.getSeconds();
+
+  document.getElementById('live-clock').textContent=
+    'Current Time: '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // ── Find schedule slot ──
+  let schedIdx=-1;
+  for(let i=0;i<tasks.length;i++){
+    if(nowSecs>=tasks[i].start*60&&nowSecs<tasks[i].end*60){schedIdx=i;break;}
+  }
+  if(schedIdx===-1){
+    for(let i=0;i<tasks.length;i++){
+      if(nowSecs<tasks[i].start*60){schedIdx=i;break;}
+    }
+  }
+
+  // Active = sched slot; if that's done, advance to next un-done
+  let activeIdx=schedIdx;
+  if(activeIdx!==-1&&tasks[activeIdx].el.classList.contains('done')){
+    for(let i=activeIdx+1;i<tasks.length;i++){
+      if(!tasks[i].el.classList.contains('done')){activeIdx=i;break;}
+    }
+  }
+  currentActiveIdx=activeIdx;
+
+  // ── Banner ──
+  const banner=document.getElementById('current-banner');
+  const cbName=document.getElementById('cb-name');
+  const cbTime=document.getElementById('cb-time');
+  const cbSub=document.getElementById('cb-sublabel');
+  banner.classList.remove('late-banner','ahead-banner');
+
+  if(activeIdx!==-1&&activeIdx<tasks.length){
+    const at=tasks[activeIdx];
+    const secsToEnd=at.end*60-nowSecs;
+    cbName.textContent=at.name;
+    if(activeIdx>schedIdx){
+      // Ahead of schedule
+      cbTime.textContent=fmt(secsToEnd);
+      cbSub.textContent='to end';
+      banner.classList.add('ahead-banner');
+    } else if(secsToEnd<0){
+      cbTime.textContent='+'+fmt(-secsToEnd);
+      cbSub.textContent='overdue!';
+      banner.classList.add('late-banner');
+    } else {
+      cbTime.textContent=fmt(secsToEnd);
+      cbSub.textContent='to end';
+    }
+  } else {
+    const done=tasks.slice(1,-1).filter(t=>t.el.classList.contains('done')).length;
+    const allDone=done===totalCheckable;
+    cbName.textContent=allDone?'All done! 🎉':"Time's Up!";
+    cbTime.textContent='';
+    cbSub.textContent=allDone?'':'Not all tasks complete';
+    if(!allDone) banner.classList.add('late-banner');
+  }
+  syncBannerCheck();
+
+  // ── Cards ──
+  tasks.forEach((t,i)=>{
+    const card=t.el;
+    const endSecs=t.end*60;
+    const isLeave=(i===tasks.length-1); // last card = leave
+
+    card.classList.remove('active','late','future');
+
+    // Done tasks: show delta
+    if(card.classList.contains('done')&&!t.noCheck){
+      if(!t.doneDeltaSet&&t.checkedAt!==null){
+        const delta=t.end-t.checkedAt;
+        const absDelta=Math.abs(delta);
+        const mins=Math.floor(absDelta);
+        const secs=Math.round((absDelta-mins)*60);
+        t.cdTime.textContent=(delta>=0?'+':'-')+mins+':'+(String(secs).padStart(2,'0'));
+        t.cdLabel.textContent=delta>=0?'early':'late';
+        t.cdChip.classList.remove('delta-early','delta-late');
+        t.cdChip.classList.add(delta>=0?'delta-early':'delta-late');
+        t.doneDeltaSet=true;
+      }
+      return;
+    }
+
+    // Leave card: always live countdown to 7:15
+    if(isLeave){
+      const secsTo=tasks[tasks.length-1].end*60-nowSecs;
+      t.cdTime.textContent=secsTo>0?fmt(secsTo):'🚀';
+      t.cdLabel.textContent=secsTo>0?'to leave':'go!';
+      t.cdChip.classList.remove('delta-early','delta-late');
+      card.classList.add(i===activeIdx?'active':'future');
+      return;
+    }
+
+    if(i===activeIdx){
+      const secsLeft=endSecs-nowSecs;
+      if(secsLeft<0){
+        card.classList.add('late');
+        t.cdTime.textContent='+'+fmt(-secsLeft);
+        t.cdLabel.textContent='overdue';
+      } else {
+        card.classList.add('active');
+        t.cdTime.textContent=fmt(secsLeft);
+        t.cdLabel.textContent='to end';
+      }
+      t.cdChip.classList.remove('delta-early','delta-late');
+      if(endSecs-nowSecs<=0&&lastNotifiedIdx!==i){lastNotifiedIdx=i;ping();}
+    } else if(i>activeIdx||(activeIdx===-1)){
+      card.classList.add('future');
+      t.cdTime.textContent=fmt(endSecs-t.start*60);
+      t.cdLabel.textContent='duration';
+      t.cdChip.classList.remove('delta-early','delta-late');
+    } else {
+      t.cdTime.textContent='—';
+      t.cdLabel.textContent='past';
+      t.cdChip.classList.remove('delta-early','delta-late');
+    }
+  });
+}
+
+tick();
+setInterval(tick,1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Evening Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#1a1a2e;--dusk:#16213e;--indigo:#4a4e8c;
+    --lavender:#9b8ec4;--moon:#f0c040;--star:#ffe57a;
+    --teal:#00C9A7;--purple:#845EC2;--pink:#FF6B8A;
+    --blue:#4D96FF;--green:#06D6A0;--peach:#FF9F7A;
+    --card-bg:#242444;--text:#e8e8f0;
+    --shadow-dark:rgba(0,0,0,.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--night);font-family:'Nunito',sans-serif;
+    min-height:100vh;padding:20px;
+    background-image:
+      radial-gradient(circle at 15% 20%,#2d1b4e 0%,transparent 40%),
+      radial-gradient(circle at 85% 75%,#1a2a4e 0%,transparent 40%),
+      radial-gradient(circle at 50% 50%,#0d1b2e 0%,transparent 70%);
+    color:var(--text);
+  }
+
+  /* ── Stars background ── */
+  body::before{
+    content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%,rgba(255,255,255,.6),transparent),
+      radial-gradient(1px 1px at 25% 8%,rgba(255,255,255,.4),transparent),
+      radial-gradient(1px 1px at 40% 20%,rgba(255,255,255,.7),transparent),
+      radial-gradient(1px 1px at 60% 5%,rgba(255,255,255,.5),transparent),
+      radial-gradient(1px 1px at 75% 18%,rgba(255,255,255,.6),transparent),
+      radial-gradient(1px 1px at 88% 10%,rgba(255,255,255,.4),transparent),
+      radial-gradient(1px 1px at 5% 35%,rgba(255,255,255,.3),transparent),
+      radial-gradient(1px 1px at 90% 40%,rgba(255,255,255,.5),transparent),
+      radial-gradient(2px 2px at 50% 12%,rgba(255,229,120,.8),transparent),
+      radial-gradient(2px 2px at 80% 25%,rgba(255,229,120,.6),transparent);
+    pointer-events:none;z-index:0;
+  }
+  body>*{position:relative;z-index:1;}
+
+  header{text-align:center;padding:20px 16px 8px;}
+  .moon-icon{
+    font-size:48px;display:block;
+    animation:moon-bob 5s ease-in-out infinite;
+    filter:drop-shadow(0 4px 16px #f0c04066);
+  }
+  @keyframes moon-bob{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-10px) rotate(8deg)}}
+  h1{font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,6vw,2.8rem);color:var(--moon);line-height:1.1;text-shadow:3px 3px 0 #6b4a00;margin-top:4px;}
+  .subtitle{font-size:.9rem;color:#6878a0;font-weight:700;margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+
+  /* ── START button ── */
+  .start-wrap{
+    max-width:520px;margin:20px auto 0;
+    display:flex;justify-content:center;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .4s,transform .4s;
+  }
+  .start-wrap.visible{opacity:1;transform:translateY(0);}
+  .start-btn{
+    background:linear-gradient(135deg,#845EC2,#4a4e8c);
+    border:none;border-radius:24px;
+    padding:14px 40px;font-family:'Fredoka One',cursive;font-size:1.3rem;
+    color:white;cursor:pointer;letter-spacing:.5px;
+    box-shadow:0 4px 0 #3a2a6a,0 8px 24px rgba(132,94,194,.4);
+    transition:transform .15s,box-shadow .15s;
+    display:flex;align-items:center;gap:10px;
+  }
+  .start-btn:hover{transform:translateY(-2px);box-shadow:0 6px 2px #3a2a6a,0 10px 28px rgba(132,94,194,.5);}
+  .start-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #3a2a6a,0 4px 16px rgba(132,94,194,.3);}
+  .start-btn.started{
+    background:linear-gradient(135deg,#2d4a3e,#1a3a2e);
+    box-shadow:0 4px 0 #0d2018,0 8px 24px rgba(6,214,160,.2);
+    cursor:default;
+  }
+  .start-btn.started:hover{transform:none;box-shadow:0 4px 0 #0d2018,0 8px 24px rgba(6,214,160,.2);}
+
+  /* ── Current Task banner ── */
+  .current-banner{
+    max-width:520px;margin:20px auto 0;
+    background:#242444;border-radius:18px;
+    padding:14px 18px;
+    box-shadow:0 4px 0 #10102a,0 6px 20px rgba(0,0,0,.3);
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    align-items:center;gap:12px;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .4s,transform .4s;
+    border-left:6px solid var(--indigo);
+  }
+  .current-banner.visible{opacity:1;transform:translateY(0);}
+  .current-banner.late-banner{border-color:#e05555;}
+  .current-banner.ahead-banner{border-color:var(--green);}
+  .cb-left{min-width:0;}
+  .cb-label{font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#5a6088;margin-bottom:2px;}
+  .cb-name{font-size:1.1rem;font-weight:900;color:var(--text);line-height:1.2;}
+  .cb-right{text-align:center;flex-shrink:0;}
+  .cb-time{font-family:'Fredoka One',cursive;font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--lavender);}
+  .current-banner.late-banner .cb-time{color:#e05555;}
+  .current-banner.ahead-banner .cb-time{color:var(--green);}
+  .cb-sublabel{font-size:.62rem;font-weight:800;color:#4a5078;text-transform:uppercase;letter-spacing:.5px;}
+  .current-banner.late-banner .cb-sublabel{color:#b07070;}
+  .current-banner.ahead-banner .cb-sublabel{color:var(--teal);}
+
+  /* Checkbox in banner */
+  .cb-check{
+    width:34px;height:34px;border-radius:50%;border:3px solid #3a3a5a;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:transparent;cursor:pointer;
+    transition:all .2s;flex-shrink:0;
+  }
+  .cb-check:hover{border-color:var(--green);background:#0d2a1e;}
+  .cb-check.checked{background:var(--green);border-color:var(--green);color:white;}
+  .cb-check.hidden{visibility:hidden;pointer-events:none;}
+
+  /* Live clock */
+  .live-clock{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#4a5a7a;text-align:center;margin:8px 0 0;letter-spacing:1px;}
+
+  /* Progress */
+  .progress-wrap{max-width:520px;margin:12px auto 4px;padding:0 4px;}
+  .progress-label{display:flex;justify-content:space-between;font-size:.82rem;font-weight:800;color:#4a5a7a;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+  #progress-count{color:var(--teal);}
+  .progress-bar{height:10px;background:#1a1a34;border-radius:10px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--lavender));border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;}
+
+  .schedule{max-width:520px;margin:16px auto 0;display:flex;flex-direction:column;gap:8px;}
+
+  /* ── Task card ── */
+  .task-card{
+    background:var(--card-bg);border-radius:20px;
+    padding:14px 16px 14px 20px;
+    display:grid;grid-template-columns:52px 1fr auto auto;
+    align-items:center;gap:12px;
+    box-shadow:0 4px 0 #10102a,0 6px 16px rgba(0,0,0,.3);
+    opacity:0;transform:translateY(20px);
+    transition:opacity .4s ease,transform .4s ease,box-shadow .2s;
+    position:relative;overflow:hidden;
+  }
+  .task-card.visible{opacity:1;transform:translateY(0);}
+  .task-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:20px 0 0 20px;}
+
+  .task-card.active{box-shadow:0 0 0 3px var(--lavender),0 6px 20px rgba(155,142,196,.2);}
+  .task-card.active::after{content:'NOW';position:absolute;top:8px;right:56px;font-size:.6rem;font-weight:900;letter-spacing:1px;color:white;background:var(--purple);border-radius:6px;padding:2px 6px;}
+  .task-card.late{box-shadow:0 0 0 3px #e05555,0 6px 20px rgba(224,85,85,.2);}
+  .task-card.late::after{background:#e05555;content:'LATE';}
+
+  .task-card.done{background:#1e2a1e;box-shadow:0 4px 0 #0d1a0d,0 6px 16px rgba(0,0,0,.2);}
+  .task-card.done .task-name{text-decoration:line-through;color:#4a6a4a;}
+  .task-card.done .task-time{color:#3a5a3a;}
+  .task-card.done .task-duration{color:#2a4a2a;}
+
+  /* no-check card */
+  .task-card.no-check{grid-template-columns:52px 1fr auto;}
+
+  .emoji-box{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+  .task-info{min-width:0;}
+  .task-time{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#5a6088;margin-bottom:2px;}
+  .task-name{font-size:1.05rem;font-weight:800;color:var(--text);line-height:1.2;}
+  .task-duration{font-size:.75rem;font-weight:700;color:#6878a0;margin-top:2px;}
+
+  /* ── Countdown chip ── */
+  .task-countdown{
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    background:#1a1a34;border:2px solid #2a2a4a;border-radius:14px;
+    padding:6px 10px;min-width:60px;line-height:1.2;
+  }
+  .cd-time{font-family:'Fredoka One',cursive;font-size:1rem;font-variant-numeric:tabular-nums;letter-spacing:.5px;color:var(--lavender);}
+  .cd-label{font-size:.62rem;font-weight:800;color:#4a5078;text-transform:uppercase;letter-spacing:.5px;}
+
+  .task-card.active .task-countdown{background:#1e1a34;border-color:var(--purple);}
+  .task-card.active .cd-time{color:var(--lavender);}
+  .task-card.active .cd-label{color:#8070b0;}
+  .task-card.late .task-countdown{background:#2a1010;border-color:#804040;}
+  .task-card.late .cd-time{color:#e05555;}
+  .task-card.late .cd-label{color:#a06060;}
+  .task-card.done .task-countdown{background:#0d1a0d;border-color:#1a2a1a;}
+  .task-card.done .cd-time{font-size:.82rem;}
+  .task-countdown.delta-early{background:#0d1a0d;border-color:var(--green);}
+  .task-countdown.delta-early .cd-time{color:var(--green);}
+  .task-countdown.delta-late{background:#2a1010;border-color:#804040;}
+  .task-countdown.delta-late .cd-time{color:#e05555;}
+  .task-card.future .task-countdown{opacity:.4;}
+
+  /* ── Check circle ── */
+  .check-circle{
+    width:28px;height:28px;border-radius:50%;border:3px solid #3a3a5a;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:all .2s;font-size:14px;color:transparent;cursor:pointer;
+  }
+  .task-card.done .check-circle{background:var(--green);border-color:var(--green);color:white;}
+  .check-circle:hover{border-color:var(--green);background:#0d1a12;}
+
+  /* ── Colour themes (evening palette) ── */
+  .c1::before{background:var(--lavender)} .c1 .emoji-box{background:#1e1a30}.c1 .task-time{color:var(--lavender)}
+  .c2::before{background:var(--blue)}     .c2 .emoji-box{background:#141e34}.c2 .task-time{color:var(--blue)}
+  .c3::before{background:var(--pink)}     .c3 .emoji-box{background:#2a1420}.c3 .task-time{color:var(--pink)}
+  .c4::before{background:var(--teal)}     .c4 .emoji-box{background:#0d1e1a}.c4 .task-time{color:var(--teal)}
+  .c5::before{background:var(--moon)}     .c5 .emoji-box{background:#2a2210}.c5 .task-time{color:var(--moon)}
+  .c6::before{background:var(--peach)}    .c6 .emoji-box{background:#2a1a10}.c6 .task-time{color:var(--peach)}
+  .c7::before{background:var(--green)}    .c7 .emoji-box{background:#0d1e14}.c7 .task-time{color:var(--green)}
+  .c8::before{background:var(--purple)}   .c8 .emoji-box{background:#1e1430}.c8 .task-time{color:var(--purple)}
+
+  /* ── Not-started overlay ── */
+  .task-card.not-started{opacity:.4;pointer-events:none;}
+  .task-card.not-started.visible{opacity:.4;}
+
+  /* ── Finish button ── */
+  .finish-wrap{
+    max-width:520px;margin:16px auto 0;
+    display:flex;justify-content:center;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .4s,transform .4s;
+  }
+  .finish-wrap.visible{opacity:1;transform:translateY(0);}
+  .finish-btn{
+    background:#2a2a3a;border:2px solid #3a3a5a;
+    border-radius:24px;padding:14px 40px;
+    font-family:'Fredoka One',cursive;font-size:1.3rem;
+    color:#4a5078;cursor:not-allowed;letter-spacing:.5px;
+    box-shadow:0 4px 0 #10102a;
+    transition:all .2s;
+    display:flex;align-items:center;gap:10px;
+  }
+  .finish-btn.unlocked{
+    background:linear-gradient(135deg,#1a3a2e,#0d2a4e);
+    border-color:var(--teal);color:var(--teal);cursor:pointer;
+    box-shadow:0 4px 0 #061a14,0 8px 24px rgba(0,201,167,.3);
+    animation:finish-glow 2s ease-in-out infinite;
+  }
+  .finish-btn.unlocked:hover{transform:translateY(-2px);box-shadow:0 6px 2px #061a14,0 10px 28px rgba(0,201,167,.4);}
+  .finish-btn.unlocked:active{transform:translateY(2px);}
+  .finish-btn.celebrated{background:linear-gradient(135deg,#1a3a2e,#0d4e2a);border-color:var(--green);color:var(--green);cursor:default;animation:none;}
+  @keyframes finish-glow{0%,100%{box-shadow:0 4px 0 #061a14,0 8px 24px rgba(0,201,167,.3)}50%{box-shadow:0 4px 0 #061a14,0 8px 32px rgba(0,201,167,.6)}}
+
+  /* ── Adhoc reminders dropdown ── */
+  .adhoc-wrap{
+    max-width:520px;margin:10px auto 0;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .4s,transform .4s;
+  }
+  .adhoc-wrap.visible{opacity:1;transform:translateY(0);}
+  .adhoc-toggle{
+    background:#242444;border:2px solid #2a2a4a;border-radius:16px;
+    padding:12px 16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;color:#8878c0;
+    transition:border-color .2s,background .2s;
+  }
+  .adhoc-toggle:hover{border-color:var(--lavender);background:#2a2a50;}
+  .adhoc-toggle-left{display:flex;align-items:center;gap:10px;}
+  .adhoc-toggle-icon{font-size:1.2rem;}
+  .adhoc-chevron{font-size:1rem;transition:transform .3s;}
+  .adhoc-panel.open~.adhoc-toggle .adhoc-chevron,
+  .adhoc-wrap.open .adhoc-chevron{transform:rotate(180deg);}
+  .adhoc-badge{
+    background:#3a2a5a;border-radius:10px;padding:2px 8px;
+    font-size:.72rem;font-weight:900;color:var(--lavender);letter-spacing:.5px;
+  }
+  .adhoc-panel{
+    background:#1e1e38;border:2px solid #2a2a4a;
+    border-top:none;border-radius:0 0 16px 16px;
+    overflow:hidden;max-height:0;
+    transition:max-height .35s cubic-bezier(.4,0,.2,1);
+  }
+  .adhoc-panel.open{max-height:400px;}
+  .adhoc-item{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 16px;border-bottom:1px solid #252540;
+    cursor:pointer;transition:background .15s;
+    font-weight:700;font-size:.95rem;color:#8888b0;
+  }
+  .adhoc-item:last-child{border-bottom:none;}
+  .adhoc-item:hover{background:#252545;}
+  .adhoc-item.checked{color:#3a4a3a;}
+  .adhoc-item.checked .adhoc-item-text{text-decoration:line-through;color:#3a4a3a;}
+  .adhoc-circle{
+    width:22px;height:22px;border-radius:50%;border:2.5px solid #3a3a5a;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;color:transparent;flex-shrink:0;transition:all .2s;
+  }
+  .adhoc-item.checked .adhoc-circle{background:var(--green);border-color:var(--green);color:white;}
+
+  .bottom-msg{
+    text-align:center;margin:16px auto 32px;max-width:420px;
+    font-size:.88rem;font-weight:700;color:#3a4a5a;padding:0 16px;line-height:1.5;
+    opacity:0;transition:opacity .4s ease;
+  }
+  .bottom-msg.visible{opacity:1;}
+  .done-msg{display:none;color:var(--teal);font-size:1.05rem;font-family:'Fredoka One',cursive;}
+  @keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+
+  /* Celebration overlay */
+  #celebrate{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    pointer-events:none;z-index:999;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .5s;
+  }
+  #celebrate.show{opacity:1;}
+  .celebrate-msg{
+    font-family:'Fredoka One',cursive;font-size:2rem;color:var(--moon);
+    text-shadow:0 0 20px #f0c04088,3px 3px 0 #6b4a00;
+    text-align:center;padding:20px;
+    animation:pop .4s ease;
+  }
+</style>
+</head>
+<body>
+
+<div id="celebrate"><div class="celebrate-msg">🌙 Sleep well! 🌟</div></div>
+
+<header>
+  <span class="moon-icon">🌙</span>
+  <h1>My Evening Schedule</h1>
+  <p class="subtitle">P7 · Bedtime Routine</p>
+</header>
+
+<!-- START button -->
+<div class="start-wrap" id="start-wrap">
+  <button class="start-btn" id="start-btn" onclick="startRoutine()">
+    <span>🌙</span><span>Start Evening Routine</span>
+  </button>
+</div>
+
+<!-- Current Task banner -->
+<div class="current-banner" id="current-banner">
+  <div class="cb-left">
+    <div class="cb-label">Current Task</div>
+    <div class="cb-name" id="cb-name">Press Start to begin</div>
+  </div>
+  <div class="cb-right">
+    <div class="cb-time" id="cb-time"></div>
+    <div class="cb-sublabel" id="cb-sublabel"></div>
+  </div>
+  <div class="cb-check hidden" id="cb-check" onclick="tickCurrentTask()">✓</div>
+</div>
+
+<div class="live-clock" id="live-clock">Current Time: --:--:--</div>
+
+<!-- Ad-hoc reminders -->
+<div class="adhoc-wrap" id="adhoc-wrap">
+  <div class="adhoc-toggle" onclick="toggleAdhoc()" id="adhoc-toggle">
+    <div class="adhoc-toggle-left">
+      <span class="adhoc-toggle-icon">📋</span>
+      <span>Evening Reminders</span>
+      <span class="adhoc-badge" id="adhoc-badge">0 done</span>
+    </div>
+    <span class="adhoc-chevron" id="adhoc-chevron">▼</span>
+  </div>
+  <div class="adhoc-panel" id="adhoc-panel">
+    <!-- Items built from JS config below -->
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Progress</span>
+    <span><span id="progress-count">0</span> / <span id="progress-total">5</span> done</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="schedule" id="schedule">
+  <!-- Tasks are built from JS config below -->
+</div>
+
+<!-- Finish button -->
+<div class="finish-wrap" id="finish-wrap">
+  <button class="finish-btn" id="finish-btn" onclick="finishRoutine()" disabled>
+    <span id="finish-icon">🔒</span><span id="finish-text">Finish — complete all tasks first</span>
+  </button>
+</div>
+
+<div class="bottom-msg" id="bottom-msg">
+  <span class="default-msg">Tap ✓ in the banner or on a card to tick off 🌙</span>
+  <span class="done-msg">🌟 Brilliant! Sleep tight! 💤</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// ── EASY CONFIG — Edit these two lists to update the schedule ──
+// ════════════════════════════════════════════════════════════════
+
+const TASK_CONFIG = [
+  // type: 'timed'   → has a running countdown, checkbox + delta shown on done
+  // type: 'check'   → just a checkbox, no timer
+  // timerFrom: null → timer starts from overall Start button press
+  // timerFrom: 'N'  → timer starts when task index N is checked (0-based)
+  // duration: minutes (only for timed tasks)
+  {
+    id: 'pyjamas',
+    name: 'Put on Pyjamas',
+    emoji: '🌙',
+    color: 'c1',
+    type: 'timed',
+    duration: 10,       // minutes
+    timerFrom: null,    // starts when Start is pressed
+    subtitle: '10 minutes',
+  },
+  {
+    id: 'puzzles',
+    name: 'Puzzles with Dad',
+    emoji: '🧩',
+    color: 'c2',
+    type: 'check',
+    subtitle: 'Puzzle time!',
+  },
+  {
+    id: 'stories',
+    name: 'Stories with Mum',
+    emoji: '📖',
+    color: 'c3',
+    type: 'check',
+    subtitle: 'Story time!',
+  },
+  {
+    id: 'teeth',
+    name: 'Brush Teeth',
+    emoji: '🦷',
+    color: 'c4',
+    type: 'timed',
+    duration: 10,       // minutes
+    timerFrom: 2,       // index of 'stories' task — starts when Mum checkbox is pressed
+    timerFromLabel: "Starts when Stories is ticked",
+  },
+  {
+    id: 'melatonin',
+    name: 'Bring Up Melatonin',
+    emoji: '💊',
+    color: 'c5',
+    type: 'check',
+    subtitle: 'Don\'t forget!',
+  },
+];
+
+const ADHOC_CONFIG = [
+  // Add or remove items here freely
+  { id: 'laptop',    label: 'Plug in Laptop',            emoji: '💻' },
+  { id: 'phone',     label: 'Plug in Phone',             emoji: '📱' },
+  { id: 'ipad',      label: 'Plug in iPad',              emoji: '📲' },
+  { id: 'uniform',   label: 'Check Uniform for Morning', emoji: '👕' },
+  { id: 'clothes',   label: 'Tidy My Clothes Outside Room', emoji: '👗' },
+  { id: 'lunch',     label: 'Check Lunch Menu',          emoji: '🍽️' },
+  { id: 'lunchbox',  label: 'Take out Lunchbox',         emoji: '🎒' },
+];
+
+// ════════════════════════════════════════════════════════════════
+// ── END CONFIG — Don't need to touch below for content changes ──
+// ════════════════════════════════════════════════════════════════
+
+let started = false;
+let startTime = null;      // Date object when Start was pressed
+let taskTimers = {};       // id → { startedAt: Date, endAt: Date }
+let taskState = {};        // id → { done: bool, checkedAt: Date, doneDeltaShown: bool }
+let currentActiveId = null;
+let tickerInterval = null;
+
+TASK_CONFIG.forEach(t => {
+  taskState[t.id] = { done: false, checkedAt: null, doneDeltaShown: false };
+  taskTimers[t.id] = { startedAt: null, endAt: null };
+});
+
+// ── Persistence ───────────────────────────────────────────────
+const STORE_KEY = 'p7evening_v1';
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+function saveState() {
+  try {
+    const taskSnap = {};
+    TASK_CONFIG.forEach(t => {
+      taskSnap[t.id] = {
+        done: taskState[t.id].done,
+        checkedAt: taskState[t.id].checkedAt ? taskState[t.id].checkedAt.getTime() : null,
+        doneDeltaShown: taskState[t.id].doneDeltaShown,
+        timerStartedAt: taskTimers[t.id].startedAt ? taskTimers[t.id].startedAt.getTime() : null,
+        timerEndAt: taskTimers[t.id].endAt ? taskTimers[t.id].endAt.getTime() : null,
+      };
+    });
+    const adhocSnap = {};
+    ADHOC_CONFIG.forEach(item => {
+      adhocSnap[item.id] = !!document.getElementById(`adhoc-${item.id}`)?.classList.contains('checked');
+    });
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      date: todayStr(),
+      started,
+      startTime: startTime ? startTime.getTime() : null,
+      tasks: taskSnap,
+      adhoc: adhocSnap,
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    // New day → wipe and start fresh
+    if (state.date !== todayStr()) { localStorage.removeItem(STORE_KEY); return; }
+
+    // Restore started / startTime
+    if (state.started) {
+      started = true;
+      startTime = state.startTime ? new Date(state.startTime) : new Date();
+
+      // Update start button to show already started
+      const btn = document.getElementById('start-btn');
+      btn.classList.add('started');
+      btn.innerHTML = '<span>✅</span><span>Routine Started!</span>';
+      btn.disabled = true;
+      document.getElementById('current-banner').classList.add('visible');
+
+      // Remove not-started class from all cards
+      TASK_CONFIG.forEach(t => {
+        document.getElementById(`card-${t.id}`)?.classList.remove('not-started');
+      });
+
+      if (!tickerInterval) tickerInterval = setInterval(tick, 1000);
+    }
+
+    // Restore task states and timers
+    TASK_CONFIG.forEach(t => {
+      const s = state.tasks?.[t.id];
+      if (!s) return;
+      if (s.timerStartedAt) {
+        taskTimers[t.id].startedAt = new Date(s.timerStartedAt);
+        taskTimers[t.id].endAt = new Date(s.timerEndAt);
+      }
+      if (s.done) {
+        taskState[t.id].done = true;
+        taskState[t.id].checkedAt = s.checkedAt ? new Date(s.checkedAt) : null;
+        taskState[t.id].doneDeltaShown = false; // let tick() re-render delta chip
+        document.getElementById(`card-${t.id}`)?.classList.add('done');
+      }
+    });
+
+    // Restore adhoc checkboxes
+    if (state.adhoc) {
+      ADHOC_CONFIG.forEach(item => {
+        if (state.adhoc[item.id]) {
+          document.getElementById(`adhoc-${item.id}`)?.classList.add('checked');
+        }
+      });
+      updateAdhocBadge();
+    }
+
+    updateProgress();
+  } catch(e) {}
+}
+
+// ── Build task cards ──────────────────────────────────────────
+function buildTasks() {
+  const sched = document.getElementById('schedule');
+  sched.innerHTML = '';
+  TASK_CONFIG.forEach((t, i) => {
+    const isTimed = t.type === 'timed';
+    const card = document.createElement('div');
+    card.className = `task-card ${t.color} not-started${isTimed ? '' : ' has-no-countdown'}`;
+    card.id = `card-${t.id}`;
+
+    const countdownHtml = isTimed
+      ? `<div class="task-countdown" id="chip-${t.id}"><span class="cd-time" id="cd-time-${t.id}">—</span><span class="cd-label" id="cd-label-${t.id}">${t.timerFrom != null ? 'waiting' : 'duration'}</span></div>`
+      : '';
+    const checkHtml = `<div class="check-circle" id="circle-${t.id}" onclick="toggleTask('${t.id}')">✓</div>`;
+
+    // subtitle: show timerFromLabel if exists
+    const sub = t.timerFromLabel || t.subtitle || '';
+
+    card.innerHTML = `
+      <div class="emoji-box">${t.emoji}</div>
+      <div class="task-info">
+        <div class="task-time" id="task-time-${t.id}">${isTimed ? (t.timerFromLabel || `${t.duration} minutes`) : 'Whenever ready'}</div>
+        <div class="task-name">${t.name}</div>
+        <div class="task-duration" id="task-dur-${t.id}">${sub}</div>
+      </div>
+      ${countdownHtml}
+      ${checkHtml}
+    `;
+    // For check-only tasks, remove countdown column
+    if (!isTimed) card.style.gridTemplateColumns = '52px 1fr auto';
+    sched.appendChild(card);
+  });
+}
+
+// ── Build adhoc panel ─────────────────────────────────────────
+function buildAdhoc() {
+  const panel = document.getElementById('adhoc-panel');
+  panel.innerHTML = '';
+  ADHOC_CONFIG.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'adhoc-item';
+    div.id = `adhoc-${item.id}`;
+    div.onclick = () => toggleAdhocItem(item.id);
+    div.innerHTML = `
+      <div class="adhoc-circle" id="adhoc-circle-${item.id}">✓</div>
+      <span class="adhoc-item-text">${item.emoji} ${item.label}</span>
+    `;
+    panel.appendChild(div);
+  });
+  updateAdhocBadge();
+}
+
+function toggleAdhocItem(id) {
+  const el = document.getElementById(`adhoc-${id}`);
+  el.classList.toggle('checked');
+  updateAdhocBadge();
+  updateProgress();
+  saveState();
+}
+
+function toggleAdhoc() {
+  const panel = document.getElementById('adhoc-panel');
+  const wrap = document.getElementById('adhoc-wrap');
+  const chevron = document.getElementById('adhoc-chevron');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function updateAdhocBadge() {
+  const done = ADHOC_CONFIG.filter(i => document.getElementById(`adhoc-${i.id}`)?.classList.contains('checked')).length;
+  document.getElementById('adhoc-badge').textContent = `${done} / ${ADHOC_CONFIG.length} done`;
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function fmt(secs) {
+  const s = Math.abs(Math.round(secs));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+function fmtDelta(secs) {
+  const s = Math.abs(Math.round(secs));
+  const m = Math.floor(s / 60), ss = s % 60;
+  return (secs >= 0 ? '+' : '-') + m + ':' + String(ss).padStart(2, '0');
+}
+function secsSince(date) { return date ? (Date.now() - date.getTime()) / 1000 : 0; }
+function ping() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1100].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      osc.start(t); osc.stop(t + 0.65);
+    });
+  } catch(e) {}
+  if (navigator.vibrate) navigator.vibrate([180, 80, 180]);
+}
+
+// ── Start routine ──────────────────────────────────────────────
+function startRoutine() {
+  if (started) return;
+  started = true;
+  startTime = new Date();
+
+  // Kick off timers for tasks that start from the overall start
+  TASK_CONFIG.forEach(t => {
+    if (t.type === 'timed' && (t.timerFrom === null || t.timerFrom === undefined)) {
+      taskTimers[t.id].startedAt = startTime;
+      taskTimers[t.id].endAt = new Date(startTime.getTime() + t.duration * 60000);
+    }
+  });
+
+  // Mark all cards as no longer not-started
+  TASK_CONFIG.forEach(t => {
+    document.getElementById(`card-${t.id}`)?.classList.remove('not-started');
+  });
+
+  const btn = document.getElementById('start-btn');
+  btn.classList.add('started');
+  btn.innerHTML = '<span>✅</span><span>Routine Started!</span>';
+  btn.disabled = true;
+
+  document.getElementById('current-banner').classList.add('visible');
+
+  if (!tickerInterval) tickerInterval = setInterval(tick, 1000);
+  tick();
+  saveState();
+}
+
+// ── Toggle task ────────────────────────────────────────────────
+function toggleTask(id) {
+  if (!started) return;
+  const state = taskState[id];
+  const card = document.getElementById(`card-${id}`);
+  const wasDone = state.done;
+  state.done = !wasDone;
+
+  if (!wasDone) {
+    state.checkedAt = new Date();
+    state.doneDeltaShown = false;
+    card.classList.add('done');
+    ping();
+
+    // If this task being checked triggers a timer on another task
+    const myIdx = TASK_CONFIG.findIndex(t => t.id === id);
+    TASK_CONFIG.forEach(t => {
+      if (t.type === 'timed' && t.timerFrom === myIdx && !taskTimers[t.id].startedAt) {
+        taskTimers[t.id].startedAt = new Date();
+        taskTimers[t.id].endAt = new Date(Date.now() + t.duration * 60000);
+      }
+    });
+  } else {
+    state.checkedAt = null;
+    state.doneDeltaShown = false;
+    card.classList.remove('done');
+  }
+
+  updateProgress();
+  updateBanner();
+  syncBannerCheck();
+  saveState();
+}
+
+function tickCurrentTask() {
+  if (!currentActiveId) return;
+  toggleTask(currentActiveId);
+}
+
+// ── Progress ──────────────────────────────────────────────────
+const totalCheckable = TASK_CONFIG.length;
+
+function updateProgress() {
+  const done = TASK_CONFIG.filter(t => taskState[t.id].done).length;
+  document.getElementById('progress-count').textContent = done;
+  document.getElementById('progress-total').textContent = totalCheckable;
+  document.getElementById('progress-fill').style.width = (done / totalCheckable * 100) + '%';
+
+  const allDone = done === totalCheckable;
+  document.querySelector('.default-msg').style.display = allDone ? 'none' : 'block';
+  const dm = document.querySelector('.done-msg');
+  dm.style.display = allDone ? 'block' : 'none';
+  if (allDone) { dm.style.animation = 'none'; dm.offsetHeight; dm.style.animation = 'pop .4s ease'; }
+
+  // Unlock finish button — requires all tasks AND all reminders checked
+  const allAdhocDone = ADHOC_CONFIG.every(i => document.getElementById(`adhoc-${i.id}`)?.classList.contains('checked'));
+  const finBtn = document.getElementById('finish-btn');
+  if (allDone && allAdhocDone && started) {
+    finBtn.classList.add('unlocked');
+    finBtn.disabled = false;
+    document.getElementById('finish-icon').textContent = '🌙';
+    document.getElementById('finish-text').textContent = 'Finish Evening Routine!';
+  } else {
+    finBtn.classList.remove('unlocked');
+    finBtn.disabled = true;
+    document.getElementById('finish-icon').textContent = '🔒';
+    const tasksLeft = totalCheckable - done;
+    const remindersLeft = ADHOC_CONFIG.length - ADHOC_CONFIG.filter(i => document.getElementById(`adhoc-${i.id}`)?.classList.contains('checked')).length;
+    if (!allDone && !allAdhocDone) document.getElementById('finish-text').textContent = `Finish — ${tasksLeft} task${tasksLeft!==1?'s':''} & ${remindersLeft} reminder${remindersLeft!==1?'s':''} left`;
+    else if (!allDone) document.getElementById('finish-text').textContent = `Finish — ${tasksLeft} task${tasksLeft!==1?'s':''} left`;
+    else document.getElementById('finish-text').textContent = `Finish — ${remindersLeft} reminder${remindersLeft!==1?'s':''} left`;
+  }
+}
+
+// ── Banner ────────────────────────────────────────────────────
+function updateBanner() {
+  if (!started) return;
+  const banner = document.getElementById('current-banner');
+  const cbName = document.getElementById('cb-name');
+  const cbTime = document.getElementById('cb-time');
+  const cbSub = document.getElementById('cb-sublabel');
+  banner.classList.remove('late-banner', 'ahead-banner');
+
+  // Find first undone task
+  const nextTask = TASK_CONFIG.find(t => !taskState[t.id].done);
+  currentActiveId = nextTask ? nextTask.id : null;
+
+  if (nextTask) {
+    cbName.textContent = nextTask.name;
+    if (nextTask.type === 'timed' && taskTimers[nextTask.id].endAt) {
+      const secsLeft = (taskTimers[nextTask.id].endAt.getTime() - Date.now()) / 1000;
+      if (secsLeft < 0) {
+        cbTime.textContent = '+' + fmt(-secsLeft);
+        cbSub.textContent = 'overdue!';
+        banner.classList.add('late-banner');
+      } else {
+        cbTime.textContent = fmt(secsLeft);
+        cbSub.textContent = 'to end';
+      }
+    } else if (nextTask.type === 'timed' && !taskTimers[nextTask.id].startedAt) {
+      cbTime.textContent = '';
+      cbSub.textContent = 'waiting to start';
+    } else {
+      cbTime.textContent = '';
+      cbSub.textContent = 'tap ✓ when done';
+    }
+  } else {
+    cbName.textContent = 'All done! 🌙';
+    cbTime.textContent = '';
+    cbSub.textContent = 'Amazing work!';
+    banner.classList.add('ahead-banner');
+  }
+  syncBannerCheck();
+}
+
+function syncBannerCheck() {
+  const cbCheck = document.getElementById('cb-check');
+  if (!started || !currentActiveId) { cbCheck.classList.add('hidden'); return; }
+  cbCheck.classList.remove('hidden');
+  if (taskState[currentActiveId]?.done) cbCheck.classList.add('checked');
+  else cbCheck.classList.remove('checked');
+}
+
+// ── Main tick ─────────────────────────────────────────────────
+function tick() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    'Current Time: ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  if (!started) return;
+  updateBanner();
+
+  TASK_CONFIG.forEach(t => {
+    const card = document.getElementById(`card-${t.id}`);
+    const state = taskState[t.id];
+    const timer = taskTimers[t.id];
+    if (!card) return;
+
+    card.classList.remove('active', 'late', 'future');
+
+    if (t.type !== 'timed') return; // checkbox-only tasks don't need countdown updates
+
+    const cdTime = document.getElementById(`cd-time-${t.id}`);
+    const cdLabel = document.getElementById(`cd-label-${t.id}`);
+    const chip = document.getElementById(`chip-${t.id}`);
+    if (!cdTime || !chip) return;
+
+    // Done: show delta
+    if (state.done && !state.doneDeltaShown && state.checkedAt && timer.endAt) {
+      const deltaSecs = (timer.endAt.getTime() - state.checkedAt.getTime()) / 1000;
+      cdTime.textContent = fmtDelta(deltaSecs);
+      cdLabel.textContent = deltaSecs >= 0 ? 'early' : 'late';
+      chip.classList.remove('delta-early', 'delta-late');
+      chip.classList.add(deltaSecs >= 0 ? 'delta-early' : 'delta-late');
+      state.doneDeltaShown = true;
+      return;
+    }
+    if (state.done) return;
+
+    chip.classList.remove('delta-early', 'delta-late');
+
+    if (!timer.startedAt) {
+      // Timer hasn't started yet (waiting for a dependency)
+      cdTime.textContent = fmt(t.duration * 60);
+      cdLabel.textContent = 'waiting';
+      card.classList.add('future');
+      return;
+    }
+
+    const secsLeft = (timer.endAt.getTime() - now.getTime()) / 1000;
+
+    // Is this the current active task?
+    const isActive = currentActiveId === t.id;
+    if (isActive) {
+      if (secsLeft < 0) {
+        card.classList.add('late');
+        cdTime.textContent = '+' + fmt(-secsLeft);
+        cdLabel.textContent = 'overdue';
+      } else {
+        card.classList.add('active');
+        cdTime.textContent = fmt(secsLeft);
+        cdLabel.textContent = 'to end';
+      }
+    } else if (!state.done) {
+      // In-progress timer but not the current focus
+      if (secsLeft < 0) {
+        cdTime.textContent = '+' + fmt(-secsLeft);
+        cdLabel.textContent = 'overdue';
+      } else {
+        cdTime.textContent = fmt(secsLeft);
+        cdLabel.textContent = 'left';
+      }
+    }
+  });
+}
+
+// ── Finish ────────────────────────────────────────────────────
+function finishRoutine() {
+  const btn = document.getElementById('finish-btn');
+  if (!btn.classList.contains('unlocked')) return;
+  btn.classList.remove('unlocked');
+  btn.classList.add('celebrated');
+  btn.disabled = true;
+  document.getElementById('finish-icon').textContent = '🌟';
+  document.getElementById('finish-text').textContent = 'Sleep tight! 💤';
+  ping();
+
+  const cel = document.getElementById('celebrate');
+  cel.classList.add('show');
+  setTimeout(() => cel.classList.remove('show'), 3000);
+}
+
+// ── Reveal ────────────────────────────────────────────────────
+function revealAll() {
+  const els = document.querySelectorAll('.start-wrap,.task-card,.finish-wrap,.adhoc-wrap,#bottom-msg,#current-banner');
+  els.forEach((el, i) => setTimeout(() => el.classList.add('visible'), i * 55));
+}
+window.addEventListener('load', () => {
+  buildTasks();
+  buildAdhoc();
+  loadState();
+  revealAll();
+  updateProgress();
+  tick();
+  setInterval(tick, 1000);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible')
+    document.querySelectorAll('.start-wrap,.task-card,.finish-wrap,.adhoc-wrap,#bottom-msg,#current-banner')
+      .forEach(el => el.classList.add('visible'));
+});
+document.addEventListener('click', () => { try { new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }, { once: true });
+</script>
+</body>
+</html>
